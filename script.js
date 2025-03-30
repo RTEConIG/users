@@ -9,7 +9,7 @@ const firebaseConfig = {
   };
 
 // Inicializar Firebase
-const app = firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
@@ -19,18 +19,31 @@ const allowedEmails = ["usuario1@gmail.com", "usuario2@gmail.com"]; // Modifica 
 // Función para verificar si el usuario está permitido
 const checkUserAccess = (email) => {
     if (allowedEmails.includes(email)) {
-        window.location.href = "index.html";
+        // Usuario permitido, carga la página
+        document.getElementById("user-info").textContent = `Correo: ${email}`;
     } else {
         alert("Acceso denegado.");
         signOut(auth);
+        window.location.href = "login.html"; // Redirigir al login
     }
 };
+
+// Verificar autenticación al cargar `index.html`
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        // El usuario está autenticado
+        checkUserAccess(user.email);
+    } else {
+        // No hay usuario autenticado, redirige a login
+        window.location.href = "login.html";
+    }
+});
 
 // Autenticación con Google
 const googleBtn = document.getElementById("login-google-btn");
 if (googleBtn) {
     googleBtn.addEventListener("click", () => {
-        signInWithPopup(auth, provider)
+        firebase.auth().signInWithPopup(provider)
             .then((result) => checkUserAccess(result.user.email))
             .catch((error) => console.error("Error en login:", error));
     });
@@ -43,48 +56,18 @@ if (emailBtn) {
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
 
-        signInWithEmailAndPassword(auth, email, password)
+        firebase.auth().signInWithEmailAndPassword(auth, email, password)
             .then((userCredential) => checkUserAccess(userCredential.user.email))
             .catch((error) => alert("Error en login: " + error.message));
     });
-}
-
-// Registro de usuario (para cuentas de correo y contraseña)
-const registerLink = document.getElementById("register-link");
-if (registerLink) {
-    registerLink.addEventListener("click", () => {
-        const email = prompt("Ingresa tu correo:");
-        const password = prompt("Ingresa tu contraseña (mínimo 6 caracteres):");
-
-        createUserWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                alert("Cuenta creada con éxito. Ahora inicia sesión.");
-            })
-            .catch((error) => alert("Error en registro: " + error.message));
-    });
-}
-
-// Verificar autenticación al cargar `index.html`
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        if (allowedEmails.includes(user.email)) {
-            document.getElementById("user-info").textContent = `Correo: ${user.email}`;
-        } else {
-            alert("Acceso denegado. Contacta al administrador.");
-            signOut(auth);
-            window.location.href = "login.html";
-        }
-    } else {
-        window.location.href = "login.html";
-    }
 });
 
 // Cerrar sesión
 const logoutBtn = document.getElementById("logout-btn");
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
-        signOut(auth).then(() => {
-            window.location.href = "login.html";
+        firebase.auth().signOut().then(() => {
+            window.location.href = "login.html"; // Redirigir al login después de cerrar sesión
         });
     });
 }
