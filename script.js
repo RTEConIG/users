@@ -23,8 +23,9 @@ const checkUserAccess = (email) => {
         document.getElementById("user-info").textContent = `Correo: ${email}`;
     } else {
         alert("Acceso denegado.");
-        signOut(auth);
-        window.location.href = "login.html"; // Redirigir al login
+        signOut(auth).then(() => {
+            window.location.href = "login.html"; // Redirigir al login
+        });
     }
 };
 
@@ -56,7 +57,7 @@ if (emailBtn) {
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
 
-        firebase.auth().signInWithEmailAndPassword(auth, email, password)
+        firebase.auth().signInWithEmailAndPassword(email, password)
             .then((userCredential) => checkUserAccess(userCredential.user.email))
             .catch((error) => alert("Error en login: " + error.message));
     });
@@ -68,6 +69,8 @@ if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         firebase.auth().signOut().then(() => {
             window.location.href = "login.html"; // Redirigir al login después de cerrar sesión
+        }).catch((error) => {
+            console.error("Error al cerrar sesión:", error);
         });
     });
 }
